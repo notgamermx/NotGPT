@@ -1,0 +1,18 @@
+/* Google Font already imported in HTML */
+
+/* Custom scrollbar */
+textarea::-webkit-scrollbar,
+.response-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+textarea::-webkit-scrollbar-thumb,
+.response-container::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 4px;
+}
+
+textarea::-webkit-scrollbar-track,
+.response-container::-webkit-scrollbar-track {
+  background-color: #f3f4f6;
+}

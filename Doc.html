@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rika's Assistant</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#4f46e5',
+                        'secondary': '#facc15',
+                        'background': '#f9fafb',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        /* Custom scrollbar for better feel */
+        textarea::-webkit-scrollbar, .response-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-thumb, .response-container::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-track, .response-container::-webkit-scrollbar-track {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-start justify-center p-4 sm:p-8 font-sans">
+    
+    <!-- Main Application Wrapper (Loads immediately) -->
+    <div id="main-content-wrapper" class="w-full max-w-2xl bg-white shadow-2xl rounded-xl p-6 sm:p-8 mt-10">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-4 flex items-center">
+            <svg class="w-8 h-8 text-primary mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v13m-8-8h8m4 0h8"></path></svg>
+            Rika's Assistant
+        </h1>
+        <p class="text-gray-500 mb-6">Hey, it's Rika here! How can I help you today?</p>
+
+        <!-- --- NAVIGATION TABS --- -->
+        <div class="flex border-b border-gray-200 mb-6">
+            <button id="nav-chat" class="px-4 py-2 text-sm font-semibold rounded-t-lg transition duration-150 border-b-2 border-primary text-primary" onclick="switchPage('chat')">
+                Chat
+            </button>
+            <button id="nav-settings" class="px-4 py-2 text-sm font-medium text-gray-500 rounded-t-lg transition duration-150 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent" onclick="switchPage('settings')">
+                Settings
+            </button>
+        </div>
+
+        <!-- --- PAGE 1: CHAT INTERFACE --- -->
+        <div id="chat-page" class="page-content space-y-4">
+            
+            <!-- MODE SELECTOR -->
+            <div class="mb-6 p-4 border border-indigo-200 bg-indigo-50 rounded-lg">
+                <label class="block text-sm font-bold text-indigo-700 mb-2">Select Mode:</label>
+                <div class="flex space-x-4">
+                    <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                        <input type="radio" name="mode" value="text" checked onchange="switchMode('text')" class="form-radio text-primary focus:ring-primary">
+                        <span class="ml-2">Text & Image Analysis</span>
+                    </label>
+                    <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                        <input type="radio" name="mode" value="image" onchange="switchMode('image')" class="form-radio text-primary focus:ring-primary">
+                        <span class="ml-2">Image Generation (New!)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Image Upload (Visible only in Text Mode) -->
+            <div id="image-upload-area" class="mb-6">
+                <label for="image-input" class="block text-sm font-medium text-gray-700 mb-2">Upload Image (Optional for analysis):</label>
+                <input type="file" id="image-input" accept="image/*" class="w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-indigo-700 transition duration-150">
+            </div>
+
+            <!-- Image Generation Settings (Visible only in Image Mode) -->
+            <div id="image-settings-area" class="hidden space-y-4 mb-6 p-4 border border-secondary bg-yellow-50 rounded-lg">
+                <h3 class="text-lg font-bold text-yellow-800">Image Settings for Complex Art</h3>
+
+                <!-- Aspect Ratio Selector -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Aspect Ratio:</label>
+                    <select id="aspect-ratio-input" class="w-full p-2 border border-gray-300 rounded-lg shadow-inner focus:ring-primary focus:border-primary">
+                        <option value="1:1" selected>Square (1:1)</option>
+                        <option value="9:16">Portrait (9:16)</option>
+                        <option value="16:9">Landscape (16:9)</option>
+                    </select>
+                </div>
+
+                <!-- Negative Prompt Input -->
+                <div>
+                    <label for="negative-prompt-input" class="block text-sm font-medium text-gray-700 mb-2">Negative Prompt (What to AVOID):</label>
+                    <textarea id="negative-prompt-input" rows="2" class="w-full p-3 border border-gray-300 rounded-lg shadow-inner focus:ring-primary focus:border-primary transition duration-150 ease-in-out" placeholder="e.g., blurry, low resolution, ugly, amateur, artifacts, deformed hands."></textarea>
+                </div>
+            </div>
+
+            <!-- Prompt Area -->
+            <div class="mb-6">
+                <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-2" id="prompt-label">Your Prompt:</label>
+                <textarea id="prompt-input" rows="3" class="w-full p-3 mb-4 border border-gray-300 rounded-lg shadow-inner focus:ring-primary focus:border-primary transition duration-150 ease-in-out" placeholder="e.g., Describe what is happening in this image."></textarea>
+            </div>
+
+            <!-- Action Button -->
+            <button id="generate-button" class="w-full bg-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg flex items-center justify-center disabled:opacity-50" onclick="handleGeneration()">
+                <span id="button-text">Generate Response</span>
+                <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+
+            <!-- AI Response Area -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-3" id="response-title">AI Response:</h2>
+                
+                <!-- Action Button for TTS (Visible only in Text Mode) -->
+                <div id="tts-area" class="flex items-center justify-between mb-2">
+                    <button id="tts-button" class="px-3 py-1 text-xs font-semibold bg-indigo-200 text-indigo-800 rounded-full hover:bg-indigo-300 disabled:opacity-50 transition duration-150 ease-in-out flex items-center shadow-sm" onclick="handleTTS()" disabled>
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 3v14a1 1 0 01-1.383.924l-3.236-2.427A1 1 0 005 15V5a1 1 0 00.383-.847l3.999-2.925zM16.707 9.293a1 1 0 010 1.414l-2 2a1 1 0 01-1.414-1.414L15.586 10l-2-2a1 1 0 011.414-1.414l2 2z" clip-rule="evenodd"></path></svg>
+                        <span id="tts-button-text">✨ Speak Response</span>
+                        <svg id="tts-loading-spinner" class="animate-spin ml-1 h-4 w-4 text-indigo-800 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                    <!-- Audio Player for TTS -->
+                    <audio id="audio-player" class="w-3/4 hidden" controls></audio>
+                </div>
+
+                <!-- TEXT OUTPUT (Visible in Text Mode) -->
+                <div id="text-output-area">
+                    <div id="response-container" class="response-container min-h-[100px] max-h-[400px] overflow-y-auto p-4 bg-background border border-gray-300 rounded-lg shadow-md text-gray-700 whitespace-pre-wrap">
+                        Your generated content will appear here.
+                    </div>
+                </div>
+
+                <!-- IMAGE OUTPUT (Visible in Image Mode) -->
+                <div id="image-output-area" class="hidden flex justify-center items-center min-h-[300px] p-4 bg-background border border-gray-300 rounded-lg shadow-md">
+                    <img id="generated-image" class="max-w-full max-h-[400px] rounded-lg shadow-xl" alt="Generated AI Image">
+                    <p id="image-placeholder" class="text-gray-500 italic">The generated image will appear here.</p>
+                </div>
+                
+                <!-- Citation Sources Area (Only for Gemini Text Mode) -->
+                <div id="source-container" class="mt-4 hidden p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-sm text-indigo-800">
+                    <p class="font-semibold mb-1">Sources:</p>
+                    <ul id="source-list" class="list-disc list-inside space-y-1"></ul>
+                </div>
+
+                <!-- Error Message Area -->
+                <div id="error-message" class="mt-4 hidden p-3 bg-red-100 border border-red-300 rounded-lg text-sm text-red-700 font-medium"></div>
+            </div>
+        </div>
+
+        <!-- --- PAGE 2: SETTINGS INTERFACE --- -->
+        <div id="settings-page" class="page-content space-y-4 hidden">
+            
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">API Configuration</h2>
+            
+            <!-- API Key Input and Link -->
+            <div class="mb-6">
+                <label for="api-key-input" class="block text-sm font-bold text-gray-800 mb-2">
+                    Gemini API Key / Proxy Token (Optional):
+                </label>
+                <input type="password" id="api-key-input" class="w-full p-3 border border-gray-300 rounded-lg shadow-inner focus:ring-primary focus:border-primary transition duration-150 ease-in-out" placeholder="Paste your key or a secure proxy token here (e.g., AIzaSy...)">
+                <p class="mt-2 text-sm text-gray-600">
+                    Need a key? Get one here: 
+                    <a href="https://aistudio.google.com/api-keys" target="_blank" class="text-primary hover:text-indigo-700 underline font-semibold">
+                        aistudio.google.com/api-keys
+                    </a>
+                </p>
+            </div>
+            
+            <!-- Save Button and Confirmation -->
+            <button class="w-full bg-green-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg" onclick="saveApiKey()">
+                Save Key
+            </button>
+            <div id="key-confirmation" class="mt-4 hidden p-3 rounded-lg text-sm font-medium"></div>
+
+
+            <div class="p-4 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg">
+                <h3 class="font-semibold text-lg mb-2">Current API Status</h3>
+                <ul class="list-disc list-inside space-y-1 text-sm">
+                    <li>**Text/Analysis Model:** `gemini-2.5-flash-preview-05-20`</li>
+                    <li>**Image Generation Model:** <span class="font-bold text-green-700">`gemini-2.5-flash-image-preview`</span> (Updated)</li>
+                    <li>**TTS Model:** `gemini-2.5-flash-preview-tts` (Audio Output)</li>
+                    <li>**Grounding:** Google Search enabled for text/analysis mode.</li>
+                </ul>
+            </div>
+
+            <div class="p-3 mt-4 text-xs bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-lg">
+                🛡️ **SECURE DEPLOYMENT NOTE:** To truly hide your key, you must use a **Serverless Proxy** when deploying this app publicly. If you paste your key here and deploy this file, the key will be visible to users in their browser's network traffic.
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- API Constants ---
+        const GEMINI_TEXT_MODEL = 'gemini-2.5-flash-preview-05-20';
+        const GEMINI_TTS_MODEL = 'gemini-2.5-flash-preview-tts';
+        const IMAGEN_MODEL = 'gemini-2.5-flash-image-preview'; 
+        const TTS_VOICE = 'Kore'; 
+        const DEFAULT_API_KEY = ""; 
+        
+        // --- State ---
+        let currentMode = 'text';
+        // NEW STATE VARIABLE: Holds the key currently active in the application logic
+        let activeApiKey = DEFAULT_API_KEY; 
+
+        // --- DOM Elements ---
+        const apiKeyInput = document.getElementById('api-key-input');
+        const promptInput = document.getElementById('prompt-input');
+        const promptLabel = document.getElementById('prompt-label');
+        const imageInput = document.getElementById('image-input');
+        const imageUploadArea = document.getElementById('image-upload-area');
+        const imageSettingsArea = document.getElementById('image-settings-area');
+        const aspectRatioInput = document.getElementById('aspect-ratio-input');
+        const negativePromptInput = document.getElementById('negative-prompt-input');
+        
+        const generateButton = document.getElementById('generate-button');
+        const buttonText = document.getElementById('button-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        const responseTitle = document.getElementById('response-title');
+        const responseContainer = document.getElementById('response-container');
+        const imageOutputArea = document.getElementById('image-output-area');
+        const generatedImage = document.getElementById('generated-image');
+        const imagePlaceholder = document.getElementById('image-placeholder');
+        
+        const sourceContainer = document.getElementById('source-container');
+        const sourceList = document.getElementById('source-list');
+        const errorMessage = document.getElementById('error-message');
+        
+        // TTS elements
+        const ttsArea = document.getElementById('tts-area');
+        const ttsButton = document.getElementById('tts-button');
+        const ttsButtonText = document.getElementById('tts-button-text');
+        const ttsLoadingSpinner = document.getElementById('tts-loading-spinner');
+        const audioPlayer = document.getElementById('audio-player');
+        
+        // Settings elements
+        const keyConfirmation = document.getElementById('key-confirmation');
+
+        const chatPage = document.getElementById('chat-page');
+        const settingsPage = document.getElementById('settings-page');
+        const navChat = document.getElementById('nav-chat');
+        const navSettings = document.getElementById('nav-settings');
+
+        /**
+         * Switches the active content page and updates navigation styles.
+         */
+        function switchPage(pageId) {
+            
+            navChat.classList.remove('border-primary', 'text-primary', 'font-semibold');
+            navChat.classList.add('text-gray-500', 'font-medium', 'border-transparent');
+            navSettings.classList.remove('border-primary', 'text-primary', 'font-semibold');
+            navSettings.classList.add('text-gray-500', 'font-medium', 'border-transparent');
+
+            chatPage.classList.add('hidden');
+            settingsPage.classList.add('hidden');
+
+            if (pageId === 'chat') {
+                chatPage.classList.remove('hidden');
+                navChat.classList.add('border-primary', 'text-primary', 'font-semibold');
+                navChat.classList.remove('text-gray-500', 'font-medium', 'border-transparent');
+            } else if (pageId === 'settings') {
+                settingsPage.classList.remove('hidden');
+                navSettings.classList.add('border-primary', 'text-primary', 'font-semibold');
+                navSettings.classList.remove('text-gray-500', 'font-medium', 'border-transparent');
+            }
+        }
+        
+        /**
+         * Switches the application mode between text/analysis and image generation.
+         */
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Reset output visibility
+            responseContainer.textContent = '';
+            imageOutputArea.classList.add('hidden');
+            generatedImage.src = '';
+            imagePlaceholder.classList.remove('hidden');
+            sourceContainer.classList.add('hidden');
+
+            // Toggle UI elements based on mode
+            if (currentMode === 'image') {
+                // Image Generation Mode
+                imageUploadArea.classList.add('hidden');
+                imageSettingsArea.classList.remove('hidden');
+                ttsArea.classList.add('hidden');
+                responseContainer.classList.add('hidden'); // Ensure text area is hidden
+                
+                promptLabel.textContent = 'Image Prompt (Be descriptive!):';
+                promptInput.placeholder = 'e.g., A photorealistic oil painting of a lone astronaut surfing on Saturn\'s rings.';
+                generateButton.classList.remove('bg-primary');
+                generateButton.classList.add('bg-secondary', 'hover:bg-yellow-600', 'focus:ring-yellow-500');
+                
+            } else {
+                // Text/Analysis Mode
+                imageUploadArea.classList.remove('hidden');
+                imageSettingsArea.classList.add('hidden');
+                ttsArea.classList.remove('hidden');
+                responseContainer.classList.remove('hidden'); // Ensure text area is visible
+                imageOutputArea.classList.add('hidden');
+                
+                promptLabel.textContent = 'Your Prompt:';
+                promptInput.placeholder = 'e.g., Describe what is happening in this image.';
+                generateButton.classList.add('bg-primary');
+                generateButton.classList.remove('bg-secondary', 'hover:bg-yellow-600', 'focus:ring-yellow-500');
+            }
+            
+            // Clear any previous error messages
+            errorMessage.classList.add('hidden');
+        }
+
+        /**
+         * Saves the key from the input field to the active state variable.
+         */
+        function saveApiKey() {
+            const newKey = apiKeyInput.value.trim();
+            activeApiKey = newKey || DEFAULT_API_KEY; 
+            
+            // Provide visual confirmation
+            keyConfirmation.textContent = "API Key saved successfully! Go to the Chat tab to start generating.";
+            keyConfirmation.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+            keyConfirmation.classList.add('bg-green-100', 'text-green-700');
+        }
+
+        // Ensure chat page is active and mode is set on initial load
+        document.addEventListener('DOMContentLoaded', () => {
+             switchPage('chat');
+             switchMode('text'); // Initialize mode selector UI
+        });
+
+
+        /**
+         * Converts a File object to a Base64 string.
+         */
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return reject(new Error("No file provided."));
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const [mimeTypePrefix, base64Data] = reader.result.split(',');
+                    const mimeType = mimeTypePrefix.split(':')[1].split(';')[0];
+                    
+                    resolve({
+                        data: base64Data,
+                        mimeType: mimeType
+                    });
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        /**
+         * Implements exponential backoff for reliable API fetching.
+         */
+        async function exponentialBackoffFetch(url, options, maxRetries = 3) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) {
+                        return response;
+                    }
+                    
+                    // Specific check for 400s (API Key/Billing/Auth errors)
+                    if (response.status < 500) {
+                        const errorBody = await response.text();
+                        // For non-server errors (400s), throw to break early
+                        throw new Error(`API returned status ${response.status}: ${errorBody.substring(0, 100)}...`); 
+                    }
+
+                    throw new Error(`Server error: ${response.status}`);
+                    
+                } catch (error) {
+                    console.error(`Attempt ${i + 1} failed:`, error.message, error); 
+                    if (i === maxRetries - 1) {
+                        throw new Error("Failed to connect to the AI after multiple retries. Check console for details.");
+                    }
+                    const delay = Math.pow(2, i) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+        
+        // --- TTS Helper Functions ---
+        
+        /** Converts base64 string to ArrayBuffer. */
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        /** Converts signed 16-bit PCM data to a WAV Blob. */
+        function pcmToWav(pcm16, sampleRate = 24000) {
+            const numChannels = 1;
+            const bytesPerSample = 2; // 16-bit PCM
+            const blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataLength = pcm16.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataLength);
+            const view = new DataView(buffer);
+            let offset = 0;
+
+            function writeString(str) {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset++, str.charCodeAt(i));
+                }
+            }
+
+            // RIFF chunk
+            writeString('RIFF');
+            view.setUint32(offset, 36 + dataLength, true); offset += 4;
+            writeString('WAVE'); offset += 4;
+
+            // FMT chunk
+            writeString('fmt '); offset += 4;
+            view.setUint32(offset, 16, true); offset += 4; // Sub-chunk size
+            view.setUint16(offset, 1, true); offset += 2;  // Audio format (1 = PCM)
+            view.setUint16(offset, numChannels, true); offset += 2;
+            view.setUint32(offset, sampleRate, true); offset += 4;
+            view.setUint32(offset, byteRate, true); offset += 4;
+            view.setUint16(offset, blockAlign, true); offset += 2;
+            view.setUint16(offset, 16, true); offset += 2; // Bits per sample
+
+            // DATA chunk
+            writeString('data'); offset += 4;
+            view.setUint32(offset, dataLength, true); offset += 4;
+
+            // Write PCM data
+            for (let i = 0; i < pcm16.length; i++, offset += bytesPerSample) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+        
+        /**
+         * Generates and plays audio from the AI's response text.
+         */
+        async function handleTTS() {
+            const textToSpeak = responseContainer.textContent.trim();
+            audioPlayer.classList.add('hidden');
+            audioPlayer.pause();
+            audioPlayer.removeAttribute('src');
+
+            if (!textToSpeak || textToSpeak.includes('Thinking...')) {
+                errorMessage.textContent = 'Please generate a text response first.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+            
+            // Set TTS Loading State
+            ttsButton.disabled = true;
+            ttsButtonText.textContent = 'Generating Audio...';
+            ttsLoadingSpinner.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+
+            try {
+                // Use the globally stored active key
+                const currentApiKey = activeApiKey; 
+                
+                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${currentApiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: textToSpeak }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_VOICE } }
+                        }
+                    },
+                };
+
+                const options = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                };
+
+                const response = await exponentialBackoffFetch(API_URL, options);
+                const result = await response.json();
+
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+                    
+                    let pcmData = base64ToArrayBuffer(audioData);
+
+                    // --- CRITICAL FIX: Robustly handle odd byte length for 16-bit PCM ---
+                    if (pcmData.byteLength % 2 !== 0) {
+                        console.warn("TTS: Dropping last byte and creating new buffer for alignment.");
+                        
+                        const correctedLength = pcmData.byteLength - 1;
+                        const correctedBuffer = new ArrayBuffer(correctedLength);
+                        
+                        // Copy the first (N-1) bytes into the new, aligned buffer
+                        const sourceView = new Uint8Array(pcmData, 0, correctedLength);
+                        const targetView = new Uint8Array(correctedBuffer);
+                        targetView.set(sourceView);
+
+                        // Use the new, clean buffer
+                        pcmData = correctedBuffer;
+                    }
+                    // --- CRITICAL FIX END ---
+
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    audioPlayer.src = audioUrl;
+                    audioPlayer.classList.remove('hidden');
+                    audioPlayer.play();
+                } else {
+                    throw new Error("API did not return valid audio data.");
+                }
+
+            } catch (error) {
+                console.error("TTS Error:", error);
+                errorMessage.textContent = `TTS Failed: ${error.message}`; 
+                errorMessage.classList.remove('hidden');
+            } finally {
+                // Reset TTS Loading State
+                ttsButton.disabled = false;
+                ttsButtonText.textContent = '✨ Speak Response';
+                ttsLoadingSpinner.classList.add('hidden');
+            }
+        }
+        
+        // --- Core Generation Logic ---
+        
+        /**
+         * Handles Image Generation using the more accessible Gemini Flash Image Preview model.
+         */
+        async function handleImageGeneration(prompt, negativePrompt, aspectRatio, currentApiKey) {
+            
+            // 1. Set Image Output State
+            responseContainer.classList.add('hidden');
+            imageOutputArea.classList.remove('hidden');
+            generatedImage.classList.add('hidden');
+            imagePlaceholder.textContent = 'Generating Image... This may take a moment.';
+            imagePlaceholder.classList.remove('hidden');
+
+            const [width, height] = aspectRatio.split(':').map(Number);
+            
+            // The Flash model uses a standard generateContent endpoint
+            try {
+                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${IMAGEN_MODEL}:generateContent?key=${currentApiKey}`;
+
+                // The Flash image model uses a simpler prompt format
+                const promptContent = `Generate an image based on this prompt: "${prompt}". ` + 
+                                      (negativePrompt ? `Avoid the following elements: "${negativePrompt}". ` : '') +
+                                      `Use an aspect ratio of ${width}:${height}.`;
+
+                const payload = { 
+                    contents: [{ parts: [{ text: promptContent }] }],
+                    generationConfig: {
+                        responseModalities: ['IMAGE'],
+                        // Note: Flash image model uses text instructions for aspect ratio, not fixed parameters like Imagen 3.0
+                    },
+                };
+
+                const options = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                };
+                
+                // 2. Make the API call
+                const response = await exponentialBackoffFetch(API_URL, options);
+                const result = await response.json();
+                
+                // 3. Process the response
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                
+                if (base64Data) {
+                    const imageUrl = `data:image/png;base64,${base64Data}`;
+                    generatedImage.src = imageUrl;
+                    generatedImage.classList.remove('hidden');
+                    imagePlaceholder.classList.add('hidden');
+                } else {
+                    throw new Error("Image generation failed or returned no image data.");
+                }
+
+            } catch (error) {
+                console.error("Image Generation Error:", error);
+                errorMessage.textContent = `Image Gen Failed: ${error.message}`; 
+                errorMessage.classList.remove('hidden');
+                imagePlaceholder.textContent = 'Error: Image generation failed.';
+                imagePlaceholder.classList.remove('hidden');
+            }
+        }
+        
+        /**
+         * Handles Text and Image Analysis Generation using the Gemini API.
+         */
+        async function handleTextGeneration(userQuery, imageFile, currentApiKey) {
+            
+            // 1. Set Text Output State
+            responseContainer.classList.remove('hidden');
+            imageOutputArea.classList.add('hidden');
+            responseContainer.innerHTML = '<span class="text-gray-500 italic">Thinking...</span>';
+
+            try {
+                // --- GEMINI API Setup ---
+                const systemPrompt = "You are a friendly, concise, and highly knowledgeable assistant focused on providing accurate and helpful information. Format your response using markdown.";
+                
+                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${currentApiKey}`;
+                
+                const contents = [{ role: "user", parts: [] }];
+                if (userQuery) contents[0].parts.push({ text: userQuery });
+
+                if (imageFile) {
+                    const imageBase64 = await fileToBase64(imageFile);
+                    contents[0].parts.push({
+                        inlineData: {
+                            mimeType: imageBase64.mimeType,
+                            data: imageBase64.data
+                        }
+                    });
+                }
+
+                const payload = {
+                    contents: contents,
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                const options = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                };
+                
+                // 2. Make the API call with backoff
+                const response = await exponentialBackoffFetch(API_URL, options);
+                const result = await response.json();
+                
+                // 3. Process the response
+                const candidate = result.candidates?.[0];
+                let generatedText = '';
+                let sources = [];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    generatedText = candidate.content.parts[0].text;
+                    
+                    // Extract citations
+                    const groundingMetadata = candidate.groundingMetadata;
+                    if (groundingMetadata?.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({ uri: attribution.web?.uri, title: attribution.web?.title }))
+                            .filter(source => source.uri && source.title);
+                    }
+                } else {
+                    generatedText = "AI did not return a valid text response. Try a different prompt.";
+                }
+
+                // Update UI
+                responseContainer.textContent = generatedText; 
+
+                if (sources.length > 0) {
+                    sources.forEach(source => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `<a href="${source.uri}" target="_blank" class="text-indigo-900 hover:text-indigo-600 underline transition duration-150">${source.title || source.uri}</a>`;
+                        sourceList.appendChild(listItem);
+                    });
+                    sourceContainer.classList.remove('hidden');
+                }
+                
+            } catch (error) {
+                console.error("Fatal Error during API generation:", error);
+                errorMessage.textContent = `Error: ${error.message}`; 
+                errorMessage.classList.remove('hidden');
+                responseContainer.innerHTML = '<span class="text-red-600">Failed to get a response. Check the Developer Console (F12) for network errors.</span>';
+            }
+        }
+
+        /**
+         * Main entry point for generation.
+         */
+        async function handleGeneration() {
+            const userQuery = promptInput.value.trim();
+            const imageFile = imageInput.files[0];
+            
+            // Use the globally stored active key
+            const currentApiKey = activeApiKey; 
+
+            if (!userQuery && currentMode !== 'image') {
+                 errorMessage.textContent = 'Please enter a prompt and/or upload an image.';
+                 errorMessage.classList.remove('hidden');
+                 return;
+            }
+            if (!userQuery && currentMode === 'image') {
+                 errorMessage.textContent = 'Please enter a descriptive prompt for the image.';
+                 errorMessage.classList.remove('hidden');
+                 return;
+            }
+            
+            // --- NEW CHECK FOR IMAGE GENERATION PROXY/KEY ---
+            if (currentMode === 'image' && activeApiKey === DEFAULT_API_KEY) {
+                 errorMessage.textContent = 'Image Generation requires an API Key or Proxy Token configured in the Settings tab to run outside the official environment (due to security/CORS policy).';
+                 errorMessage.classList.remove('hidden');
+                 return;
+            }
+            // --- END NEW CHECK ---
+            
+            // 1. Set Loading State
+            generateButton.disabled = true;
+            ttsButton.disabled = true; 
+            audioPlayer.classList.add('hidden');
+            
+            buttonText.textContent = currentMode === 'image' ? 'Generating Image...' : 'Generating...';
+            loadingSpinner.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            sourceContainer.classList.add('hidden');
+            sourceList.innerHTML = '';
+            
+            if (currentMode === 'image') {
+                 const negativePrompt = negativePromptInput.value.trim();
+                 const aspectRatio = aspectRatioInput.value;
+
+                 await handleImageGeneration(userQuery, negativePrompt, aspectRatio, currentApiKey);
+            } else {
+                 await handleTextGeneration(userQuery, imageFile, currentApiKey);
+            }
+
+            // 4. Reset Loading State
+            generateButton.disabled = false;
+            buttonText.textContent = 'Generate Response';
+            loadingSpinner.classList.add('hidden');
+            
+            // TTS Control: Enable if text was successfully generated
+            if (currentMode === 'text' && responseContainer.textContent.trim().length > 0 && !responseContainer.textContent.includes('Failed')) {
+                 ttsButton.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Parallax Website</title>
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. React Libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- 3. Babel to compile JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-black">
+    <div id="root"></div>
+
+    <!-- 4. Your React code goes inside a script tag with type="text/babel" -->
+    <script type="text/babel">
+        // --- React Component Code Starts Here ---
+
+        const { useState, useEffect, useRef } = React;
+
+        // --- Icon components (replaces lucide-react for a single file) ---
+        const ChevronDown = ({ size = 24, className = '' }) => (
+          <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6" /></svg>
+        );
+        const Sparkles = ({ size = 24, className = '' }) => (
+          <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 3-1.9 1.9-1.1-3-1.9 1.9-3-1.1 1.9 1.9-1.9 3 1.1 1.9-1.9 1.9 3 1.1 1.9-1.9 1.9-3Z" /><path d="M9 12.5 12 11l3 1.5" /><path d="M12 21a9 9 0 1 0-9-9" /></svg>
+        );
+        const Zap = ({ size = 24, className = '' }) => (
+          <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+        );
+        const Globe = ({ size = 24, className = '' }) => (
+          <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+        );
+        const LinkedIn = ({ size = 24, className = '' }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+            </svg>
+        );
+        const Send = ({ size = 24, className = '' }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        );
+        const Close = ({ size = 24, className = '' }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        );
+
+
+        // --- Gemini AI Assistant Modal Component ---
+        const AiAssistantModal = ({ closeModal }) => {
+            const [chatHistory, setChatHistory] = useState([
+                { role: 'model', text: "Hello! I'm Deekshith's AI assistant. Feel free to ask me about his skills, education, or creative tech interests." }
+            ]);
+            const [userInput, setUserInput] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const chatEndRef = useRef(null);
+
+            useEffect(() => {
+                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [chatHistory, isLoading]);
+
+            const handleSendMessage = async (e) => {
+                e.preventDefault();
+                if (!userInput.trim() || isLoading) return;
+
+                const newHistory = [...chatHistory, { role: 'user', text: userInput }];
+                setChatHistory(newHistory);
+                setUserInput('');
+                setIsLoading(true);
+
+                try {
+                    const systemPrompt = `You are a helpful and professional AI assistant for Deekshith (also known as "Not Gamer Mx"), an engineering student at Govt. Model Engineering College, Kochi. Your goal is to answer questions from visitors to his portfolio website. Deekshith's bio: "I'm an engineering student at Govt. Model Engineering College, Kochi, Learning python,Js,css, C++ and creative tech. Whether I’m prototyping AI/chatbot builds in low-resource hostel setups or remixing game mechanics for cracked intros, I thrive on rapid iteration and audience-ready polish." Based on this, you should be able to answer questions about his skills (Python, JS, CSS, C++), his interests (creative tech, AI/chatbots, game mechanics), his education, and his general professional persona. Keep your answers concise, friendly, and professional. If you don't know an answer, say that you are an AI assistant with limited information but can pass the message along. Do not make up information about projects or experience.`;
+
+                    const apiKey = "";
+                    const apiUrl = `https://generativelace.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                    
+                    const payload = {
+                        contents: [{ role: 'user', parts: [{ text: userInput }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const botResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process that. Please try again.";
+                    
+                    setChatHistory(prev => [...prev, { role: 'model', text: botResponse }]);
+                } catch (error) {
+                    console.error("Gemini API error:", error);
+                    setChatHistory(prev => [...prev, { role: 'model', text: "Apologies, I'm having trouble connecting right now. Please try again later." }]);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            
+            return (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="relative w-full max-w-2xl h-[80vh] max-h-[700px] bg-slate-900/80 border border-purple-500/50 rounded-2xl shadow-2xl shadow-purple-500/20 flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                            <h3 className="text-xl font-bold glow-text flex items-center gap-2"><Sparkles size={20} /> AI Assistant</h3>
+                            <button onClick={closeModal} className="text-slate-400 hover:text-white transition">
+                                <Close size={24} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                            {chatHistory.map((msg, index) => (
+                                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-[80%] p-3 rounded-xl ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200'}`}>
+                                        <p className="text-sm md:text-base whitespace-pre-wrap">{msg.text}</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {isLoading && (
+                                <div className="flex justify-start">
+                                    <div className="max-w-[80%] p-3 rounded-xl bg-slate-700 text-slate-200">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-pulse delay-0"></span>
+                                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-pulse delay-150"></span>
+                                            <span className="w-2 h-2 bg-slate-400 rounded-full animate-pulse delay-300"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={chatEndRef} />
+                        </div>
+                        <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-700">
+                            <div className="flex items-center gap-2 bg-slate-800 border border-slate-600 rounded-lg focus-within:border-purple-500 transition">
+                                <input
+                                    type="text"
+                                    value={userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    placeholder="Ask about my skills..."
+                                    className="w-full bg-transparent p-3 focus:outline-none"
+                                    disabled={isLoading}
+                                />
+                                <button type="submit" disabled={isLoading || !userInput.trim()} className="p-3 text-slate-400 hover:text-purple-400 disabled:text-slate-600 disabled:cursor-not-allowed transition">
+                                    <Send size={20} />
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+
+        function App() {
+            const [scrollY, setScrollY] = useState(0);
+            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const scrollRef = useRef(null);
+            const mouseRef = useRef(null);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                if (!scrollRef.current) {
+                    scrollRef.current = requestAnimationFrame(() => {
+                    setScrollY(window.scrollY);
+                    scrollRef.current = null;
+                    });
+                }
+                };
+
+                const handleMouseMove = (e) => {
+                if (!mouseRef.current) {
+                    mouseRef.current = requestAnimationFrame(() => {
+                    setMousePos({ x: e.clientX, y: e.clientY });
+                    mouseRef.current = null;
+                    });
+                }
+                };
+
+                window.addEventListener('scroll', handleScroll, { passive: true });
+                window.addEventListener('mousemove', handleMouseMove);
+
+                return () => {
+                window.removeEventListener('scroll', handleScroll);
+                window.removeEventListener('mousemove', handleMouseMove);
+                if (scrollRef.current) cancelAnimationFrame(scrollRef.current);
+                if (mouseRef.current) cancelAnimationFrame(mouseRef.current);
+                };
+            }, []);
+
+            return (
+                <div className="w-full overflow-x-hidden bg-black text-white selection:bg-purple-500 selection:text-white font-sans">
+                <style>{`
+                    html { scroll-behavior: smooth; }
+                    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+                    @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-30px) rotate(5deg); } }
+                    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 30px rgba(168, 85, 247, 0.4); } 50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8), 0 0 60px rgba(168, 85, 247, 0.7); } }
+                    @keyframes spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    @keyframes bounce-smooth { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+                    @keyframes glow-text { 0%, 100% { text-shadow: 0 0 10px rgba(59, 130, 246, 0.6), 0 0 20px rgba(147, 51, 24, 0.6); } 50% { text-shadow: 0 0 20px rgba(59, 130, 246, 0.9), 0 0 40px rgba(147, 51, 234, 0.9); } }
+                    .float { animation: float 4s ease-in-out infinite; }
+                    .pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+                    .spin-slow { animation: spin-slow 25s linear infinite; }
+                    .bounce-smooth { animation: bounce-smooth 2s ease-in-out infinite; }
+                    .glow-text { animation: glow-text 2.5s ease-in-out infinite; }
+                    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+                `}</style>
+                
+                {isModalOpen && <AiAssistantModal closeModal={() => setIsModalOpen(false)} />}
+
+                {/* Hero Section */}
+                <section className="relative h-screen flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute w-96 h-96 bg-blue-500 rounded-full opacity-20 blur-3xl float" style={{ left: '10%', top: '10%', transform: `translateY(${scrollY * 0.5}px) translateX(${mousePos.x * 0.02}px)` }} />
+                    <div className="absolute w-96 h-96 bg-purple-500 rounded-full opacity-20 blur-3xl float" style={{ right: '10%', top: '30%', animationDelay: '-2s', transform: `translateY(${scrollY * 0.3}px) translateX(${mousePos.x * -0.02}px)` }} />
+                    <div className="absolute w-96 h-96 bg-pink-500 rounded-full opacity-20 blur-3xl spin-slow" style={{ bottom: '10%', left: '50%', transform: `translateY(${scrollY * 0.4}px)` }} />
+                    </div>
+                    <div className="relative z-10 text-center text-white px-4">
+                    <div className="mb-6 inline-block"><Sparkles className="glow-text text-blue-300" size={60} /></div>
+                    <h1 className="text-5xl md:text-8xl font-black mb-6 glow-text leading-tight">Welcome To My World</h1>
+                    <p className="text-xl md:text-2xl mb-4 text-gray-300">Scroll Down To Experience This</p>
+                    <p className="text-lg text-gray-400 mb-12">By Not Gamer Mx</p>
+                    <div className="bounce-smooth"><ChevronDown size={50} className="mx-auto text-blue-400" /></div>
+                    </div>
+                    {[...Array(10)].map((_, i) => (
+                    <div key={i} className="absolute w-2 h-2 bg-blue-300 rounded-full" style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, animation: `float ${3 + Math.random() * 5}s ease-in-out infinite`, opacity: Math.random() * 0.7 }} />
+                    ))}
+                </section>
+
+                {/* Section 1 - Cards */}
+                <section className="relative min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center py-20">
+                    <div className="container mx-auto px-8 relative z-10">
+                    <h2 className="text-4xl md:text-6xl font-black text-center mb-20 glow-text">Do Not Click</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[ { title: 'YouTube', icon: <Sparkles size={32} className="text-white"/>, href: "https://www.youtube.com/@NotGamerMx", active: true }, { title: 'Coming Soon', icon: <Zap size={32} className="text-white"/>, active: false }, { title: 'Coming Soon', icon: <Globe size={32} className="text-white"/>, active: false } ].map((item, index) => (
+                        <div key={index} className={`group relative transition-transform duration-300 ease-out ${!item.active ? 'opacity-60' : ''}`} style={{ transform: `translateY(${Math.max(-50, 100 - scrollY / (4 + index * 1.5))}px)` }}>
+                            <div className={`absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl transition duration-500 blur-lg ${item.active ? 'opacity-0 group-hover:opacity-75' : 'opacity-0'}`} />
+                            <a href={item.active ? item.href : undefined} target="_blank" rel="noopener noreferrer" className={`relative block bg-slate-800 rounded-xl p-8 border border-slate-700 h-full transition ${item.active ? 'group-hover:border-blue-500 hover:shadow-2xl hover:shadow-purple-500/20' : 'cursor-default'}`}>
+                            <div className={`w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mb-6 flex items-center justify-center ${item.active ? 'group-hover:pulse-glow' : ''}`}>{item.icon}</div>
+                            <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
+                            <p className="text-gray-400 mb-6">Don't For Get To Subscribe</p>
+                            {item.active && <span className="inline-block text-blue-400 font-semibold transition group-hover:text-blue-300">Explore →</span>}
+                            </a>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                </section>
+
+                {/* Section 2 - Bio Section */}
+                <section className="relative min-h-screen bg-gradient-to-b from-slate-800 to-slate-900 flex items-center py-20 overflow-hidden">
+                    <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute w-80 h-80 bg-purple-500 rounded-full opacity-10 blur-3xl" style={{ right: '10%', top: '20%', transform: `translateY(${scrollY * -0.3}px) rotate(${scrollY * 0.05}deg)` }} />
+                    </div>
+                    <div className="container mx-auto px-8 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                        <div>
+                        <h2 className="text-4xl md:text-5xl font-black text-white mb-8 leading-tight">My <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">Bio</span></h2>
+                        <p className="text-lg md:text-xl text-gray-400 mb-8 leading-relaxed">I'm an engineering student at Govt. Model Engineering College, Kochi, Learning python,Js,css, C++ and creative tech. Whether I’m prototyping AI/chatbot builds in low-resource hostel setups or remixing game mechanics for cracked intros, I thrive on rapid iteration and audience-ready polish.</p>
+                        <div className="flex flex-wrap gap-4">
+                            <a href="https://www.linkedin.com/in/deekshith-1200b2384/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:shadow-xl hover:shadow-purple-500/50 transition transform hover:scale-105">
+                            <LinkedIn size={20} /> View on LinkedIn
+                            </a>
+                            <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-bold hover:shadow-xl hover:shadow-pink-500/50 transition transform hover:scale-105">
+                                ✨ Ask my AI Assistant
+                            </button>
+                        </div>
+                        </div>
+                        <div className="relative h-96 hidden md:block">
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="absolute w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg opacity-80" style={{ left: `${i * 80}px`, top: `${i * 60}px`, animation: `float ${3 + i * 0.5}s ease-in-out infinite`, animationDelay: `${i * 0.2}s`, transform: `translateY(${scrollY * (0.05 * (i + 1))}px)` }} />
+                        ))}
+                        </div>
+                    </div>
+                    </div>
+                </section>
+
+                {/* Section 4 - Coming Soon */}
+                <section className="relative min-h-screen bg-gradient-to-b from-slate-900 to-black flex items-center justify-center py-20 overflow-hidden">
+                    <div className="container mx-auto px-8 relative z-10 text-center">
+                    <h2 className="text-4xl md:text-6xl font-black text-white mb-20"><span className="glow-text">Coming Soon</span></h2>
+                    <div className="relative h-96 flex items-center justify-center blur-lg select-none">
+                        {[...Array(3)].map((_, i) => (
+                        <div key={i} className="absolute w-80 h-52 bg-gradient-to-br from-blue-600/50 to-purple-700/50 rounded-xl shadow-2xl border border-blue-400/50" style={{ transform: `translateZ(${i * -60}px) translateX(${(i-1) * 20}px)`, zIndex: 3 - i }}></div>
+                        ))}
+                    </div>
+                    </div>
+                </section>
+
+                {/* Footer */}
+                <footer className="relative bg-black border-t border-slate-800 py-16">
+                    <div className="container mx-auto px-8 relative z-10">
+                    <div className="text-center mb-8">
+                        <h3 className="text-3xl font-black text-white mb-4 glow-text">Click for amazing experince</h3>
+                        <a href="https://notgamermx.github.io/NotChat/" target="_blank" rel="noopener noreferrer" className="inline-block px-10 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-lg font-bold hover:shadow-2xl hover:shadow-pink-500/40 transition transform hover:scale-105">
+                        Launch Your Site
+                        </a>
+                    </div>
+                    <p className="text-center text-gray-500 border-t border-slate-800 pt-8 mt-8">© 2025 Not Gamer Mx. Built with animation magic.</p>
+                    </div>
+                </footer>
+                </div>
+            );
+        }
+
+        // --- React Mounting Code ---
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+
+    </script>
+</body>
+</html>

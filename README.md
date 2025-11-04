@@ -8,6 +8,6 @@ Highlights include:
 - 🤖 AI Assistant link for interactive engagement
 - 🎮 Game-inspired branding and meme-style hooks
 - 🔗 Direct links to your [LinkedIn](https://www.linkedin.com/in/deekshith-1200b2384/) 
-It’s not just a portfolio—it’s a teaser trailer for your creative universe.
+It’s not just a portfolio—it’s a teaser trailer for My creative universe.
 
 My First Project I Made :- [https://www.youtube.com/@NotGamerMX](https://notgamermx.github.io/NotGPT/)
